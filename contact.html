@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact | Bay State Make-Ready</title>
+<meta name="description" content="Request a walkthrough and fixed quote for junk removal, painting, deep cleaning, or handyman work on your Boston-area rental property.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,600&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="nav-row">
+    <a href="index.html" class="logo"><svg class="brand-mark" width="30" height="30" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><line x1="3" y1="35" x2="45" y2="35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 35V21L12 13L15 21V35" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M29 35V17L33 6L37 17V35" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M12 13L4 35M12 13L9 35M12 13L15 35M12 13L20 35" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.55"/><path d="M33 6L22 35M33 6L27 35M33 6L33 35M33 6L39 35M33 6L44 35" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.55"/><path d="M39 8.5L40 11L42.5 12L40 13L39 15.5L38 13L35.5 12L38 11Z" fill="#D9A94A"/><path d="M16 16.5L16.6 18L18.1 18.6L16.6 19.2L16 20.7L15.4 19.2L13.9 18.6L15.4 18Z" fill="#D9A94A"/></svg>Bay State<span class="dot">•</span>Make-Ready</a>
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+    <nav class="links" id="navLinks">
+      <a href="index.html">Home</a>
+      <a href="services.html">Services</a>
+      <a href="contact.html" class="active">Contact</a>
+      <a href="contact.html" class="nav-phone">(617) 555-0148</a>
+    </nav>
+  </div>
+</header>
+
+<section style="padding-bottom:90px;">
+  <div class="wrap">
+    <span class="eyebrow">Open a Work Order</span>
+    <h1>Tell Us About<br>The Unit.</h1>
+    <p style="font-size:1.1rem; max-width:56ch; margin-top:18px;">Address, what it needs, and a good number to reach you. We'll call back the same business day with next steps.</p>
+
+    <div class="grid-2" style="margin-top:52px; align-items:start;">
+
+      <!-- FORM -->
+      <div class="ticket" style="padding:36px 36px 32px 46px;">
+        <span class="ticket-no">NEW WORK ORDER REQUEST</span>
+        <form style="margin-top:22px;" name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+          <input type="hidden" name="form-name" value="contact">
+          <p style="display:none;"><label>Don't fill this out if you're human: <input name="bot-field"></label></p>
+          <div class="form-row">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" placeholder="Jane Sullivan" required>
+          </div>
+          <div class="form-row">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="(617) 555-0100" required>
+          </div>
+          <div class="form-row">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="jane@email.com" required>
+          </div>
+          <div class="form-row">
+            <label for="address">Property Address</label>
+            <input type="text" id="address" name="address" placeholder="123 Dorchester Ave, Unit 3B, Boston MA">
+          </div>
+          <div class="form-row">
+            <label for="service">What Does It Need?</label>
+            <select id="service" name="service">
+              <option>Full turnover (all four services)</option>
+              <option>Junk removal / cleanout</option>
+              <option>Interior painting</option>
+              <option>Deep cleaning</option>
+              <option>Minor handyman work</option>
+              <option>Not sure — need a walkthrough</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="message">Anything Else We Should Know?</label>
+            <textarea id="message" name="message" placeholder="Move-out date, unit size, access instructions, timeline..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Submit Work Order Request</button>
+        </form>
+      </div>
+
+      <!-- CONTACT INFO -->
+      <div>
+        <div style="margin-bottom:36px;">
+          <h3 style="color:var(--blueprint);">Call or Text</h3>
+          <a href="tel:6175550148" style="font-family:var(--font-display); font-size:1.8rem; color:var(--ink); text-decoration:none; display:inline-block; margin-top:8px;">(617) 555-0148</a>
+          <p style="margin-top:8px; font-size:0.92rem;">Mon–Sat, 7:00 AM – 6:00 PM</p>
+        </div>
+        <div style="margin-bottom:36px;">
+          <h3 style="color:var(--blueprint);">Email</h3>
+          <a href="mailto:hello@baystatemakeready.com" style="font-family:var(--font-mono); color:var(--ink);">hello@baystatemakeready.com</a>
+        </div>
+        <div style="margin-bottom:36px;">
+          <h3 style="color:var(--blueprint);">Service Area</h3>
+          <p style="margin-top:8px;">Boston, Cambridge, Somerville, Quincy, Dorchester, and surrounding Greater Boston communities.</p>
+        </div>
+        <div class="ticket" style="padding:22px 22px 20px 32px;">
+          <span class="ticket-no">RESPONSE TIME</span>
+          <div class="check-item checked" style="border-bottom:none; padding-top:12px;">
+            <span class="check-box"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12l6 6L20 6" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            Same-business-day callback
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a href="index.html" class="logo" style="margin-bottom:14px;"><svg class="brand-mark" width="30" height="30" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><line x1="3" y1="35" x2="45" y2="35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 35V21L12 13L15 21V35" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M29 35V17L33 6L37 17V35" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M12 13L4 35M12 13L9 35M12 13L15 35M12 13L20 35" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.55"/><path d="M33 6L22 35M33 6L27 35M33 6L33 35M33 6L39 35M33 6L44 35" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.55"/><path d="M39 8.5L40 11L42.5 12L40 13L39 15.5L38 13L35.5 12L38 11Z" fill="#D9A94A"/><path d="M16 16.5L16.6 18L18.1 18.6L16.6 19.2L16 20.7L15.4 19.2L13.9 18.6L15.4 18Z" fill="#D9A94A"/></svg>Bay State<span class="dot">•</span>Make-Ready</a>
+        <p style="color:rgba(247,245,238,0.6); max-width:36ch; margin-top:14px;">Property turnover services for landlords, managers, and investors across Greater Boston.</p>
+      </div>
+      <div>
+        <h3>Company</h3>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:14px;">
+          <a href="index.html">Home</a>
+          <a href="services.html">Services</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div>
+        <h3>Contact</h3>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:14px;">
+          <a href="tel:6175550148">(617) 555-0148</a>
+          <a href="mailto:hello@baystatemakeready.com">hello@baystatemakeready.com</a>
+          <span>Boston, MA</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Bay State Make-Ready. All rights reserved.</span>
+      <span>Licensed &amp; Insured, MA</span>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
