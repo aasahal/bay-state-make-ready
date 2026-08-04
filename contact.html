@@ -36,10 +36,11 @@
       <!-- FORM -->
       <div class="ticket" style="padding:36px 36px 32px 46px;">
         <span class="ticket-no">NEW WORK ORDER REQUEST</span>
-        <form style="margin-top:22px;" action="https://formspree.io/f/xdennoqk" method="POST">
+        <div data-fs-error style="color:var(--rust); font-size:0.85rem; margin-bottom:14px; font-family:var(--font-body);"></div>
+        <style>[data-fs-error] { display: none; } [data-fs-error][data-fs-active] { display: block; }</style>
+        <form id="workOrderForm" style="margin-top:22px;" action="https://formspree.io/f/xdennoqk" method="POST">
           <input type="hidden" name="_subject" value="New Work Order Request — Bay State Make-Ready">
           <input type="text" name="_gotcha" style="display:none">
-          <input type="hidden" name="_next" value="https://aasahal.github.io/bay-state-make-ready/thank-you.html">
           <div class="form-row">
             <label for="name">Full Name</label>
             <input type="text" id="name" name="name" placeholder="Jane Sullivan" required>
@@ -89,7 +90,7 @@
             <label for="message">Anything Else We Should Know?</label>
             <textarea id="message" name="message" placeholder="Whole unit or specific rooms, move-out date or timeline, access instructions..."></textarea>
           </div>
-          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Submit Work Order Request</button>
+          <button type="submit" data-fs-submit-btn class="btn btn-primary" style="width:100%; justify-content:center;">Submit Work Order Request</button>
         </form>
       </div>
 
@@ -153,5 +154,20 @@
 </footer>
 
 <script src="script.js"></script>
+<script>
+  window.formspree =
+    window.formspree ||
+    function () {
+      (formspree.q = formspree.q || []).push(arguments);
+    };
+  formspree('initForm', {
+    formElement: '#workOrderForm',
+    formId: 'xdennoqk',
+    onSuccess: function () {
+      window.location.href = 'https://aasahal.github.io/bay-state-make-ready/thank-you.html';
+    }
+  });
+</script>
+<script src="https://unpkg.com/@formspree/ajax@1" defer></script>
 </body>
 </html>
