@@ -154,6 +154,34 @@
 </footer>
 
 <script src="script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  const SUPABASE_URL = 'https://yspahqdbuqnmzvvpszaj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_FhRg-Dks5hnsNCw9_opYvA_PDUkT7kE';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Log every submission into the work order tracker (in addition to the
+  // Formspree email notification below — this doesn't replace it).
+  document.getElementById('workOrderForm').addEventListener('submit', async function () {
+    const fd = new FormData(this);
+    try {
+      const { error } = await supabaseClient.from('work_orders').insert({
+        customer_name: fd.get('name'),
+        customer_email: fd.get('email'),
+        customer_phone: fd.get('phone'),
+        customer_address: fd.get('address'),
+        client_type: fd.get('clientType'),
+        occupancy: fd.get('occupancy'),
+        service_needed: fd.get('service'),
+        notes: fd.get('message'),
+        status: 'new'
+      });
+      if (error) console.error('Work order log failed:', error);
+    } catch (err) {
+      console.error('Work order log failed:', err);
+    }
+  });
+</script>
 <script>
   window.formspree =
     window.formspree ||
