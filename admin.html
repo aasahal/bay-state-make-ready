@@ -182,11 +182,18 @@ function renderCard(wo) {
 
         <button class="btn btn-primary" data-action="save-pricing" style="margin-top:14px; padding:10px 18px; font-size:0.8rem;">Save Pricing</button>
 
+        <div style="margin-top:16px;">
+          <span class="wo-field-label">Appointment Date &amp; Time (required to set status to Scheduled)</span>
+          <input type="datetime-local" class="schedule-datetime" style="padding:8px; border:1px solid var(--line); border-radius:4px; margin-top:6px;"
+            value="${wo.scheduled_date ? new Date(wo.scheduled_date).toISOString().slice(0,16) : ''}">
+        </div>
+
         <div class="status-buttons">
           ${STATUSES.map(s => `<button data-action="set-status" data-status="${s}" class="${wo.status === s ? 'active' : ''}">${STATUS_LABELS[s]}</button>`).join('')}
         </div>
         ${wo.quoted_at ? `<p style="font-size:0.78rem; color:var(--ink-soft); margin-top:10px;">Quote sent ${new Date(wo.quoted_at).toLocaleString()}</p>` : ''}
         ${wo.invoiced_at ? `<p style="font-size:0.78rem; color:var(--ink-soft);">Invoice sent ${new Date(wo.invoiced_at).toLocaleString()}</p>` : ''}
+        ${wo.scheduled_notified_at ? `<p style="font-size:0.78rem; color:var(--ink-soft);">Calendar invite sent ${new Date(wo.scheduled_notified_at).toLocaleString()}</p>` : ''}
       </div>
     </div>
   `;
@@ -264,7 +271,19 @@ document.getElementById('workOrderList').addEventListener('click', async functio
 
   if (action === 'set-status') {
     const newStatus = btn.getAttribute('data-status');
-    const { error } = await sb.from('work_orders').update({ status: newStatus }).eq('id', id);
+    const updates = { status: newStatus };
+
+    if (newStatus === 'scheduled') {
+      const dtInput = card.querySelector('.schedule-datetime');
+      if (!dtInput.value) {
+        alert('Please pick an appointment date and time before marking this Scheduled.');
+        return;
+      }
+      updates.scheduled_date = new Date(dtInput.value).toISOString();
+      updates.scheduled_notified_at = null; // allow re-sending if date changes later
+    }
+
+    const { error } = await sb.from('work_orders').update(updates).eq('id', id);
     if (error) {
       alert('Failed to update status: ' + error.message);
     } else {
@@ -272,6 +291,33 @@ document.getElementById('workOrderList').addEventListener('click', async functio
       document.getElementById('body-' + id).classList.add('open');
     }
   }
+});
+
+// Live recalculation as the admin types or tabs between fields —
+// no need to click Save just to see updated totals.
+document.getElementById('workOrderList').addEventListener('input', function (e) {
+  const card = e.target.closest('.wo-card');
+  if (!card) return;
+  if (
+    !e.target.classList.contains('li-qty') &&
+    !e.target.classList.contains('li-price') &&
+    !e.target.classList.contains('adj-input') &&
+    !e.target.classList.contains('paid-input')
+  ) return;
+
+  // update each row's own total display
+  card.querySelectorAll('.line-row').forEach(row => {
+    const qty = Number(row.querySelector('.li-qty').value) || 0;
+    const price = Number(row.querySelector('.li-price').value) || 0;
+    row.querySelector('.li-total').textContent = money(qty * price);
+  });
+
+  const lineItems = getLineItemsFromCard(card);
+  const adjustments = Number(card.querySelector('.adj-input').value) || 0;
+  const amountPaid = Number(card.querySelector('.paid-input').value) || 0;
+  const totals = computeTotals(lineItems, adjustments, amountPaid);
+  card.querySelector('.subtotal-display').textContent = money(totals.subtotal);
+  card.querySelector('.balance-display').textContent = money(totals.balance);
 });
 
 document.getElementById('statusFilter').addEventListener('change', renderList);
