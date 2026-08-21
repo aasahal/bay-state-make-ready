@@ -191,8 +191,8 @@ function renderCard(wo) {
         <div class="status-buttons">
           ${STATUSES.map(s => `<button data-action="set-status" data-status="${s}" class="${wo.status === s ? 'active' : ''}">${STATUS_LABELS[s]}</button>`).join('')}
         </div>
-        ${wo.quoted_at ? `<p style="font-size:0.78rem; color:var(--ink-soft); margin-top:10px;">Quote sent ${new Date(wo.quoted_at).toLocaleString()}</p>` : ''}
-        ${wo.invoiced_at ? `<p style="font-size:0.78rem; color:var(--ink-soft);">Invoice sent ${new Date(wo.invoiced_at).toLocaleString()}</p>` : ''}
+        ${wo.quoted_at ? `<p style="font-size:0.78rem; color:var(--ink-soft); margin-top:10px;">Quote sent ${new Date(wo.quoted_at).toLocaleString()} <button data-action="resend-quote" style="margin-left:8px; font-family:var(--font-mono); font-size:0.7rem; padding:4px 10px; border-radius:12px; border:1px solid var(--line); background:var(--paper-white); cursor:pointer;">Resend Quote</button></p>` : ''}
+        ${wo.invoiced_at ? `<p style="font-size:0.78rem; color:var(--ink-soft);">Invoice sent ${new Date(wo.invoiced_at).toLocaleString()} <button data-action="resend-invoice" style="margin-left:8px; font-family:var(--font-mono); font-size:0.7rem; padding:4px 10px; border-radius:12px; border:1px solid var(--line); background:var(--paper-white); cursor:pointer;">Resend Invoice</button></p>` : ''}
         ${wo.scheduled_notified_at ? `<p style="font-size:0.78rem; color:var(--ink-soft);">Calendar invite sent ${new Date(wo.scheduled_notified_at).toLocaleString()}</p>` : ''}
       </div>
     </div>
@@ -286,6 +286,28 @@ document.getElementById('workOrderList').addEventListener('click', async functio
     const { error } = await sb.from('work_orders').update(updates).eq('id', id);
     if (error) {
       alert('Failed to update status: ' + error.message);
+    } else {
+      await loadWorkOrders();
+      document.getElementById('body-' + id).classList.add('open');
+    }
+  }
+
+  if (action === 'resend-quote') {
+    btn.textContent = 'Resending…';
+    const { error } = await sb.from('work_orders').update({ quoted_at: null }).eq('id', id);
+    if (error) {
+      alert('Failed to resend: ' + error.message);
+    } else {
+      await loadWorkOrders();
+      document.getElementById('body-' + id).classList.add('open');
+    }
+  }
+
+  if (action === 'resend-invoice') {
+    btn.textContent = 'Resending…';
+    const { error } = await sb.from('work_orders').update({ invoiced_at: null }).eq('id', id);
+    if (error) {
+      alert('Failed to resend: ' + error.message);
     } else {
       await loadWorkOrders();
       document.getElementById('body-' + id).classList.add('open');
