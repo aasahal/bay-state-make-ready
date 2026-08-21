@@ -72,16 +72,30 @@
   <div class="wrap">
     <span class="eyebrow">Work Order Tracker</span>
     <h1 style="font-size:1.8rem;">All Work Orders</h1>
-    <div style="margin:20px 0;">
-      <label class="wo-field-label">Filter by status</label>
-      <select id="statusFilter" style="padding:8px; border:1px solid var(--line); border-radius:4px;">
-        <option value="">All</option>
-        <option value="new">New</option>
-        <option value="quoted">Quoted</option>
-        <option value="scheduled">Scheduled</option>
-        <option value="in_progress">In Progress</option>
-        <option value="completed">Completed</option>
-      </select>
+    <div style="margin:20px 0; display:flex; gap:20px; flex-wrap:wrap; align-items:flex-end;">
+      <div>
+        <label class="wo-field-label">Search by name, email, or phone</label>
+        <input type="text" id="searchBox" placeholder="Search…" style="padding:8px; border:1px solid var(--line); border-radius:4px; min-width:220px;">
+      </div>
+      <div>
+        <label class="wo-field-label">Filter by status</label>
+        <select id="statusFilter" style="padding:8px; border:1px solid var(--line); border-radius:4px;">
+          <option value="">All</option>
+          <option value="new">New</option>
+          <option value="quoted">Quoted</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div>
+        <label class="wo-field-label">Sort</label>
+        <select id="sortOrder" style="padding:8px; border:1px solid var(--line); border-radius:4px;">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="name">Customer name (A–Z)</option>
+        </select>
+      </div>
     </div>
     <div id="workOrderList">Loading…</div>
   </div>
@@ -136,16 +150,20 @@ function renderCard(wo) {
       <div class="wo-body" id="body-${wo.id}">
         <div class="wo-grid">
           <div>
+            <span class="wo-field-label">Name</span>
+            <input type="text" class="wo-name-input" value="${(wo.customer_name || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:4px;">
+          </div>
+          <div>
             <span class="wo-field-label">Email</span>
-            <div>${wo.customer_email || '—'}</div>
+            <input type="email" class="wo-email-input" value="${(wo.customer_email || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:4px;">
           </div>
           <div>
             <span class="wo-field-label">Phone</span>
-            <div>${wo.customer_phone || '—'}</div>
+            <input type="tel" class="wo-phone-input" value="${(wo.customer_phone || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:4px;">
           </div>
           <div>
             <span class="wo-field-label">Address</span>
-            <div>${wo.customer_address || '—'}</div>
+            <input type="text" class="wo-address-input" value="${(wo.customer_address || '').replace(/"/g, '&quot;')}" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:4px;">
           </div>
           <div>
             <span class="wo-field-label">Client Type / Occupancy</span>
@@ -180,7 +198,7 @@ function renderCard(wo) {
           <span>Balance Due: <strong class="balance-display">${money(totals.balance)}</strong></span>
         </div>
 
-        <button class="btn btn-primary" data-action="save-pricing" style="margin-top:14px; padding:10px 18px; font-size:0.8rem;">Save Pricing</button>
+        <button class="btn btn-primary" data-action="save-pricing" style="margin-top:14px; padding:10px 18px; font-size:0.8rem;">Save Changes</button>
 
         <div style="margin-top:16px;">
           <span class="wo-field-label">Appointment Date &amp; Time (required to set status to Scheduled)</span>
@@ -201,9 +219,29 @@ function renderCard(wo) {
 
 function renderList() {
   const filter = document.getElementById('statusFilter').value;
-  const filtered = filter ? workOrders.filter(w => w.status === filter) : workOrders;
+  const searchTerm = document.getElementById('searchBox').value.trim().toLowerCase();
+  const sortOrder = document.getElementById('sortOrder').value;
+
+  let filtered = filter ? workOrders.filter(w => w.status === filter) : workOrders.slice();
+
+  if (searchTerm) {
+    filtered = filtered.filter(w =>
+      (w.customer_name || '').toLowerCase().includes(searchTerm) ||
+      (w.customer_email || '').toLowerCase().includes(searchTerm) ||
+      (w.customer_phone || '').toLowerCase().includes(searchTerm)
+    );
+  }
+
+  if (sortOrder === 'oldest') {
+    filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  } else if (sortOrder === 'name') {
+    filtered.sort((a, b) => (a.customer_name || '').localeCompare(b.customer_name || ''));
+  } else {
+    filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+
   const container = document.getElementById('workOrderList');
-  container.innerHTML = filtered.length ? filtered.map(renderCard).join('') : '<p>No work orders yet.</p>';
+  container.innerHTML = filtered.length ? filtered.map(renderCard).join('') : '<p>No work orders match.</p>';
 }
 
 async function loadWorkOrders() {
@@ -263,7 +301,11 @@ document.getElementById('workOrderList').addEventListener('click', async functio
       adjustments: adjustments,
       amount_paid: amountPaid,
       subtotal: totals.subtotal,
-      balance_due: totals.balance
+      balance_due: totals.balance,
+      customer_name: card.querySelector('.wo-name-input').value,
+      customer_email: card.querySelector('.wo-email-input').value,
+      customer_phone: card.querySelector('.wo-phone-input').value,
+      customer_address: card.querySelector('.wo-address-input').value
     }).eq('id', id);
     btn.textContent = error ? 'Failed — try again' : 'Saved ✓';
     if (!error) await loadWorkOrders();
@@ -343,6 +385,8 @@ document.getElementById('workOrderList').addEventListener('input', function (e) 
 });
 
 document.getElementById('statusFilter').addEventListener('change', renderList);
+document.getElementById('searchBox').addEventListener('input', renderList);
+document.getElementById('sortOrder').addEventListener('change', renderList);
 
 // ---- Auth ----
 async function checkSession() {
