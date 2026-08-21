@@ -114,10 +114,12 @@ let workOrders = [];
 
 function money(n) { return '$' + (Number(n) || 0).toFixed(2); }
 
-function computeTotals(lineItems, adjustments, amountPaid) {
+function computeTotals(lineItems, adjustments, taxRate, applyTax, amountPaid) {
   const subtotal = lineItems.reduce((s, li) => s + (Number(li.qty) || 0) * (Number(li.unit_price) || 0), 0);
-  const balance = subtotal + (Number(adjustments) || 0) - (Number(amountPaid) || 0);
-  return { subtotal, balance };
+  const taxableBase = subtotal + (Number(adjustments) || 0);
+  const tax = applyTax ? taxableBase * ((Number(taxRate) || 0) / 100) : 0;
+  const balance = taxableBase + tax - (Number(amountPaid) || 0);
+  return { subtotal, tax, balance };
 }
 
 function renderLineRows(wo) {
@@ -134,7 +136,7 @@ function renderLineRows(wo) {
 }
 
 function renderCard(wo) {
-  const totals = computeTotals(wo.line_items || [], wo.adjustments, wo.amount_paid);
+  const totals = computeTotals(wo.line_items || [], wo.adjustments, wo.tax_rate != null ? wo.tax_rate : 6.25, wo.apply_tax, wo.amount_paid);
   return `
     <div class="wo-card" data-id="${wo.id}">
       <div class="wo-head" data-action="toggle">
@@ -189,6 +191,12 @@ function renderCard(wo) {
         <div class="totals-row">
           <label>Adjustments</label>
           <input type="number" class="adj-input" step="0.01" value="${wo.adjustments || 0}">
+        </div>
+        <div class="totals-row" style="gap:8px;">
+          <input type="checkbox" class="tax-checkbox" id="tax-check-${wo.id}" ${wo.apply_tax ? 'checked' : ''} style="width:auto;">
+          <label for="tax-check-${wo.id}">Apply MA state tax</label>
+          <input type="number" class="tax-rate-input" step="0.01" value="${wo.tax_rate != null ? wo.tax_rate : 6.25}" style="width:60px;" title="Tax rate %">
+          <span>%  =  <strong class="tax-display">${money(wo.tax_amount || 0)}</strong></span>
         </div>
         <div class="totals-row">
           <label>Amount Paid</label>
@@ -293,12 +301,17 @@ document.getElementById('workOrderList').addEventListener('click', async functio
   if (action === 'save-pricing') {
     const lineItems = getLineItemsFromCard(card);
     const adjustments = Number(card.querySelector('.adj-input').value) || 0;
+    const applyTax = card.querySelector('.tax-checkbox').checked;
+    const taxRate = Number(card.querySelector('.tax-rate-input').value) || 0;
     const amountPaid = Number(card.querySelector('.paid-input').value) || 0;
-    const totals = computeTotals(lineItems, adjustments, amountPaid);
+    const totals = computeTotals(lineItems, adjustments, taxRate, applyTax, amountPaid);
     btn.textContent = 'Saving…';
     const { error } = await sb.from('work_orders').update({
       line_items: lineItems,
       adjustments: adjustments,
+      apply_tax: applyTax,
+      tax_rate: taxRate,
+      tax_amount: totals.tax,
       amount_paid: amountPaid,
       subtotal: totals.subtotal,
       balance_due: totals.balance,
@@ -366,9 +379,20 @@ document.getElementById('workOrderList').addEventListener('input', function (e) 
     !e.target.classList.contains('li-qty') &&
     !e.target.classList.contains('li-price') &&
     !e.target.classList.contains('adj-input') &&
+    !e.target.classList.contains('tax-rate-input') &&
     !e.target.classList.contains('paid-input')
   ) return;
 
+  recalcCard(card);
+});
+
+document.getElementById('workOrderList').addEventListener('change', function (e) {
+  if (!e.target.classList.contains('tax-checkbox')) return;
+  const card = e.target.closest('.wo-card');
+  if (card) recalcCard(card);
+});
+
+function recalcCard(card) {
   // update each row's own total display
   card.querySelectorAll('.line-row').forEach(row => {
     const qty = Number(row.querySelector('.li-qty').value) || 0;
@@ -378,11 +402,14 @@ document.getElementById('workOrderList').addEventListener('input', function (e) 
 
   const lineItems = getLineItemsFromCard(card);
   const adjustments = Number(card.querySelector('.adj-input').value) || 0;
+  const applyTax = card.querySelector('.tax-checkbox').checked;
+  const taxRate = Number(card.querySelector('.tax-rate-input').value) || 0;
   const amountPaid = Number(card.querySelector('.paid-input').value) || 0;
-  const totals = computeTotals(lineItems, adjustments, amountPaid);
+  const totals = computeTotals(lineItems, adjustments, taxRate, applyTax, amountPaid);
   card.querySelector('.subtotal-display').textContent = money(totals.subtotal);
+  card.querySelector('.tax-display').textContent = money(totals.tax);
   card.querySelector('.balance-display').textContent = money(totals.balance);
-});
+}
 
 document.getElementById('statusFilter').addEventListener('change', renderList);
 document.getElementById('searchBox').addEventListener('input', renderList);
