@@ -206,7 +206,10 @@ function renderCard(wo) {
           <span>Balance Due: <strong class="balance-display">${money(totals.balance)}</strong></span>
         </div>
 
-        <button class="btn btn-primary" data-action="save-pricing" style="margin-top:14px; padding:10px 18px; font-size:0.8rem;">Save Changes</button>
+        <div style="display:flex; align-items:center; gap:12px; margin-top:14px;">
+          <button class="btn btn-primary" data-action="save-pricing" style="padding:10px 18px; font-size:0.8rem;">Save Now</button>
+          <span class="autosave-indicator" style="font-size:0.78rem; color:var(--ink-soft); font-family:var(--font-mono);">All changes saved ✓</span>
+        </div>
 
         <div style="margin-top:16px;">
           <span class="wo-field-label">Appointment Date &amp; Time (required to set status to Scheduled)</span>
@@ -299,29 +302,7 @@ document.getElementById('workOrderList').addEventListener('click', async functio
   }
 
   if (action === 'save-pricing') {
-    const lineItems = getLineItemsFromCard(card);
-    const adjustments = Number(card.querySelector('.adj-input').value) || 0;
-    const applyTax = card.querySelector('.tax-checkbox').checked;
-    const taxRate = Number(card.querySelector('.tax-rate-input').value) || 0;
-    const amountPaid = Number(card.querySelector('.paid-input').value) || 0;
-    const totals = computeTotals(lineItems, adjustments, taxRate, applyTax, amountPaid);
-    btn.textContent = 'Saving…';
-    const { error } = await sb.from('work_orders').update({
-      line_items: lineItems,
-      adjustments: adjustments,
-      apply_tax: applyTax,
-      tax_rate: taxRate,
-      tax_amount: totals.tax,
-      amount_paid: amountPaid,
-      subtotal: totals.subtotal,
-      balance_due: totals.balance,
-      customer_name: card.querySelector('.wo-name-input').value,
-      customer_email: card.querySelector('.wo-email-input').value,
-      customer_phone: card.querySelector('.wo-phone-input').value,
-      customer_address: card.querySelector('.wo-address-input').value
-    }).eq('id', id);
-    btn.textContent = error ? 'Failed — try again' : 'Saved ✓';
-    if (!error) await loadWorkOrders();
+    await saveCardFields(card, id, btn);
   }
 
   if (action === 'set-status') {
@@ -370,27 +351,80 @@ document.getElementById('workOrderList').addEventListener('click', async functio
   }
 });
 
-// Live recalculation as the admin types or tabs between fields —
-// no need to click Save just to see updated totals.
+// Live recalculation AND autosave as the admin types or tabs between
+// fields — no need to click Save, and nothing reloads/collapses the card.
+const AUTOSAVE_FIELD_CLASSES = [
+  'li-qty', 'li-price', 'adj-input', 'tax-rate-input', 'paid-input',
+  'wo-name-input', 'wo-email-input', 'wo-phone-input', 'wo-address-input'
+];
+const saveTimers = {};
+
 document.getElementById('workOrderList').addEventListener('input', function (e) {
   const card = e.target.closest('.wo-card');
   if (!card) return;
-  if (
-    !e.target.classList.contains('li-qty') &&
-    !e.target.classList.contains('li-price') &&
-    !e.target.classList.contains('adj-input') &&
-    !e.target.classList.contains('tax-rate-input') &&
-    !e.target.classList.contains('paid-input')
-  ) return;
+  if (!AUTOSAVE_FIELD_CLASSES.some(cls => e.target.classList.contains(cls))) return;
 
   recalcCard(card);
+  scheduleAutosave(card);
 });
 
 document.getElementById('workOrderList').addEventListener('change', function (e) {
-  if (!e.target.classList.contains('tax-checkbox')) return;
   const card = e.target.closest('.wo-card');
-  if (card) recalcCard(card);
+  if (!card) return;
+  if (!e.target.classList.contains('tax-checkbox')) return;
+  recalcCard(card);
+  scheduleAutosave(card);
 });
+
+function scheduleAutosave(card) {
+  const id = card.getAttribute('data-id');
+  clearTimeout(saveTimers[id]);
+  const indicator = card.querySelector('.autosave-indicator');
+  if (indicator) indicator.textContent = 'Unsaved changes…';
+  saveTimers[id] = setTimeout(() => {
+    saveCardFields(card, id, null);
+  }, 1200);
+}
+
+async function saveCardFields(card, id, btn) {
+  const lineItems = getLineItemsFromCard(card);
+  const adjustments = Number(card.querySelector('.adj-input').value) || 0;
+  const applyTax = card.querySelector('.tax-checkbox').checked;
+  const taxRate = Number(card.querySelector('.tax-rate-input').value) || 0;
+  const amountPaid = Number(card.querySelector('.paid-input').value) || 0;
+  const totals = computeTotals(lineItems, adjustments, taxRate, applyTax, amountPaid);
+  const indicator = card.querySelector('.autosave-indicator');
+
+  if (btn) btn.textContent = 'Saving…';
+  if (indicator) indicator.textContent = 'Saving…';
+
+  const updates = {
+    line_items: lineItems,
+    adjustments: adjustments,
+    apply_tax: applyTax,
+    tax_rate: taxRate,
+    tax_amount: totals.tax,
+    amount_paid: amountPaid,
+    subtotal: totals.subtotal,
+    balance_due: totals.balance,
+    customer_name: card.querySelector('.wo-name-input').value,
+    customer_email: card.querySelector('.wo-email-input').value,
+    customer_phone: card.querySelector('.wo-phone-input').value,
+    customer_address: card.querySelector('.wo-address-input').value
+  };
+
+  const { error } = await sb.from('work_orders').update(updates).eq('id', id);
+
+  if (btn) btn.textContent = error ? 'Failed — try again' : 'Saved ✓';
+  if (indicator) indicator.textContent = error ? 'Failed to save — check connection' : 'All changes saved ✓';
+
+  if (!error) {
+    // Update the in-memory copy so search/sort/filter stay accurate
+    // without needing to re-fetch and re-render the whole list.
+    const wo = workOrders.find(w => w.id === id);
+    if (wo) Object.assign(wo, updates);
+  }
+}
 
 function recalcCard(card) {
   // update each row's own total display
